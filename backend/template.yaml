@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  appsync-graphql
+
+  Sample SAM Template for appsync-graphql
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters:
+  NeptuneClusterReadOnlyEndpoint:
+    Type: String
+    Default: ''
+    Description: Enter your cluster's read-only endpoint URL.
+
+  VPCSubnetsPrivate:
+    Description: Private subnet IDs of the VPC for this Lambda function, comma separated
+    Type: String
+
+  VPCSecretsManagerSG:
+    Description: Security group for Neptune/Graph database on this VPC
+    Type: String
+
+Resources:
+  GetRoutesFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: getRoutes/
+      Handler: app.lambda_handler
+      Runtime: python3.8      
+      Timeout: 30
+      VpcConfig:
+        SecurityGroupIds: !Split [',', !Ref VPCSecretsManagerSG]
+        SubnetIds: !Split [',', !Ref VPCSubnetsPrivate]
+      Policies: 
+        - AWSLambdaVPCAccessExecutionRole
+        - AWSLambdaBasicExecutionRole 
+      Environment:
+        Variables:
+          NEPTUNE_CLUSTER_RO_URL: !Ref NeptuneClusterReadOnlyEndpoint
+
+  AppSyncApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: RoutesApi  
+      AuthenticationType: "API_KEY"
+
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      DefinitionS3Location: ./graphql/schema.graphql
+
+  AppSyncApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+ 
+  AppSyncDataSource:
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: "RoutesDataSource"
+      Type: "AWS_LAMBDA"
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt GetRoutesFunction.Arn
+
+  AppSyncLambdaResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getRoutes 
+      DataSourceName: !GetAtt AppSyncDataSource.Name   
+
+  AppSyncServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "appsync.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  LambdaAccessPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "AppSyncLambdaPolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action: "lambda:invokeFunction"
+            Resource:
+              - !GetAtt GetRoutesFunction.Arn 
+      Roles:
+        -
+          Ref: "AppSyncServiceRole"
+
+
+Outputs:
+  AppSyncApi:
+    Description: "AppSync GraphQL endpoint URL for Prod stage for the getRoutes function"
+    Value: !GetAtt AppSyncApi.GraphQLUrl
+  AppSyncApiKey:
+    Description: "AppSync GraphQL API Key Value"
+    Value: !GetAtt AppSyncApiKey.ApiKey
+  GetRoutesFunction:
+    Description: "GetRoutes Lambda Function ARN"
+    Value: !GetAtt GetRoutesFunction.Arn 

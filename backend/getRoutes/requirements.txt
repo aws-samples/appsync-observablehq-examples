@@ -1,0 +1,2 @@
+requests
+gremlinpython==3.4.8
