@@ -37,6 +37,7 @@ The GraphQL API and Lambda function are deployed using the AWS Serverless Applic
 More information: https://docs.aws.amazon.com/serverless-application-model
 
 1. Go the `backend/appsync-graphql` folder & edit the file named `samconfig.toml`:
+
     * `NeptuneClusterReadOnlyEndpoint`: The full Neptune Cluster RO endpoint (or another graph database's endpoint; ensure you have connectivity),
      for example: `wss://my-graph-database.cluster-ro-sdjhfdfuhydfg.us-east-1.neptune.amazonaws.com:8182/gremlin`
     * `VPCSubnetsPrivate`: Comma-separated VPC subnet IDs for your Lambda function to run in. 

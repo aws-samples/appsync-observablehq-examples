@@ -8,4 +8,4 @@ s3_prefix = "appsync-ohq"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "NeptuneClusterReadOnlyEndpoint=\"wss://database-1.cluster-ro-cdeooemj64zh.us-east-1.neptune.amazonaws.com:8182/gremlin\" VPCSubnetsPrivate=\"subnet-bd07f88c,subnet-70731e7e,subnet-0062d421,subnet-19b1ca54,subnet-9de14afb,subnet-9d9d29c2\" VPCSecretsManagerSG=\"sg-1b9c5225\""
+parameter_overrides = "NeptuneClusterReadOnlyEndpoint=\"<YOUR CLUSTER URL>\" VPCSubnetsPrivate=\"<COMMA SEPARATED LIST OF SUBNETS>\" VPCSecretsManagerSG=\"<VPC SECURITY GROUP>\""
