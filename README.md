@@ -1,5 +1,12 @@
 # ObservableHQ Notebooks with AWS AppSync & Neptune 
 
+## Pre-requisites
+ 
+* An AWS Account
+* Install Docker https://docs.docker.com/get-docker/
+* AWS SAM CLI installed https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html
+* Install Node & NPM https://docs.npmjs.com/downloading-and-installing-node-js-and-npm 
+
 ## Overview
 
 This sample consists of ObservableHQ notebooks embedded into a JavaScript single page web application, in order to display graph data from a graph database such as Amazon Neptune via AWS AppSync.
@@ -16,20 +23,41 @@ You may find this sample useful this if:
 
 ![Architecture](docs/ohq-appsync.jpg)
 
-## Setting up a sample backend (Quick Setup)
+## Setting up a sample backend
 
-### Pre-requisites
- 
-* An AWS Account
-* AWS SAM CLI installed https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html
+### Set up Neptune
 
-### Set up a Neptune cluster with sample data
+You can set up your own cluster using the CloudFormation template in the `neptune` folder, or use an existing cluster. 
 
-Note: This is optional if you already have a graph database.
+1. In the root folder, run the following command:
+    ```bash
+    aws cloudformation deploy --template-file ./backend/neptune/neptune.yaml --stack-name neptune-cluster --parameter-overrides Env=<ENVIRONMENT> DbInstanceType=<INSTANCE TYPE> --capabilities CAPABILITY_IAM
+    ```
+    
+    where `<ENVIRONMENT>` is the name of your environment, such as `dev`, `prod`, etc. and `<INSTANCE TYPE>` is the type of instance to use (min: `db.t3.medium`)
 
-1. Set up a sample Neptune cluster in a new or existing VPC of your choice; make sure the database belongs to a security group that allows inbound access to port `8182` for Gremlin queries.
-3. Open up the sample Jupyter notebook created for your new cluster and go to `Neptune > Visualization > Air-Routes-Gremlin.ipynb`
-4. Call the `%seed` command on the Notebook to load the graph database with some sample airport and air routes data from https://github.com/krlawrence/graph
+2. Once your CloudFormation stack is deployed, write down the following output keys:
+   * `DBClusterReadEndpoint`
+   * `DBClusterPort`
+   * `PrivateSubnet1`, `PrivateSubnet2` and `PrivateSubnet3`
+   * `NeptuneSG`  
+
+#### (Optional) Use an existing cluster
+
+To use your own, existing cluster, mark down the following information about your cluster:
+   * Neptune Cluster Read-Only Endpoint
+   * VPC subnets in which the cluster is deployed
+   * A security group that allows access to your cluster (Gremlin uses port `8182`)
+
+### Create a Jupyter notebook with sample data
+
+1. Head over to the Amazon Neptune console. In the Notebooks tab, click `Create Notebook`
+
+2. Open up the sample Jupyter notebook created for your new cluster and go to `Neptune > Visualization > Air-Routes-Gremlin.ipynb`
+
+4. Run the `%seed` command on the Notebook to load the graph database with some sample airport and air routes data from https://github.com/krlawrence/graph
+
+4. Done! You should have a sample graph database with some airport and flight routes data, ready for you to query. Let's do that next.
 
 ### Set up AWS App Sync / GraphQL API
 
@@ -38,10 +66,16 @@ More information: https://docs.aws.amazon.com/serverless-application-model
 
 1. Go the `backend/appsync-graphql` folder & edit the file named `samconfig.toml`:
 
-    * `NeptuneClusterReadOnlyEndpoint`: The full Neptune Cluster RO endpoint (or another graph database's endpoint; ensure you have connectivity),
-     for example: `wss://my-graph-database.cluster-ro-sdjhfdfuhydfg.us-east-1.neptune.amazonaws.com:8182/gremlin`
-    * `VPCSubnetsPrivate`: Comma-separated VPC subnet IDs for your Lambda function to run in. 
-    * `VPCSecretsManagerSG`: Security group ID for a security group allowing inbound communication to Neptune.
+* `NeptuneGremlinEndpoint`: The full Neptune Cluster RO endpoint for Gremlin. It should look like this, where `DBClusterReadEndpoint` is the output from CloudFormation in the previous section, if you deployed the cluster from the template.
+
+    `wss://<DBClusterReadEndpoint>:8182/gremlin`. 
+      
+    For example: `wss://my-graph-database.cluster-ro-sdjhfdfuhydfg.us-east-1.neptune.amazonaws.com:8182/gremlin` 
+    
+    > Pay special attention to use `wss://` here instead of `https://` for the Gremlin endpoint. 
+
+* `VPCSubnetsPrivate`: Comma-separated VPC subnet IDs for your Lambda function to run in. 
+* `VPCSecretsManagerSG`: Security group ID for a security group allowing inbound communication to Neptune.
 
 2. Run `sam build --use-container` to build your backend project.
 
@@ -50,10 +84,6 @@ More information: https://docs.aws.amazon.com/serverless-application-model
 4. The outputs of the deployment should give you the URL for your new AppSync API (`AppSyncApi`) and its API Key (`AppSyncApiKey`), as well as the Lambda function that was created as a resolver. Copy the key and API endpoint; you will use them to set up the UI.
 
 ### UI (Angular Example)
-
-#### Pre-requisites
-
-* Install Node & NPM https://docs.npmjs.com/downloading-and-installing-node-js-and-npm 
 
 #### Set up UI
 1. Head to the `angular-example` folder.
@@ -84,3 +114,7 @@ This component:
 - Subscribes to changes in the input forms (origin airport) and redefines the “data” cell of their ObservableHQ notebooks to refresh the data.
 
 Happy coding!
+
+### Notes 
+
+* The `.vscode` folder at the root is optional and meant for Visual Studio users to avoid errors with the CloudFormation YAML syntax highlighting. 

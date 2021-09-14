@@ -3,9 +3,9 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "appsync-ohq"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-5qm3xkplcoc1"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xxxxxxxxxxxxxxxxx"
 s3_prefix = "appsync-ohq"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "NeptuneClusterReadOnlyEndpoint=\"<YOUR CLUSTER URL>\" VPCSubnetsPrivate=\"<COMMA SEPARATED LIST OF SUBNETS>\" VPCSecretsManagerSG=\"<VPC SECURITY GROUP>\""
+parameter_overrides = "NeptuneClusterReadOnlyEndpoint=\"https://mydatabase.com:8182/gremlin\" VPCSubnetsPrivate=\"subnet-xxxxxxxxxxxxxxxxx,subnet-xxxxxxxxxxxxxxxxx,subnet-xxxxxxxxxxxxxxxxx\" VPCSecretsManagerSG=\"sg-xxxxxxxxxxxxxxxxx\""
