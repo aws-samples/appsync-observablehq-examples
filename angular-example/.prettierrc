@@ -2,7 +2,7 @@
   "singleQuote": true,
   "arrow-body-style": "off",
   "prefer-arrow-callback": "off",
-  "printWidth": 120, // optional
+  "printWidth": 120,
   "overrides": [
     {
       "files": "*.html",

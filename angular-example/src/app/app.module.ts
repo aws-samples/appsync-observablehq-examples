@@ -29,6 +29,7 @@ import { GraphQLModule } from './shared/graphql/graphql.module';
 import { LayoutModule } from './layout/layout.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+import { Apollo } from 'apollo-angular';
 
 @NgModule({
   declarations: [AppComponent],
@@ -45,7 +46,7 @@ import { AppRoutingModule } from './app-routing.module';
     }),
     HttpClientModule,
   ],
-  providers: [],
+  providers: [Apollo],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
